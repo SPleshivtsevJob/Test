@@ -41,9 +41,9 @@ void AProjectileBase::InitProjectile(FProjectileInfo InitParam, TArray <FPredict
 {
 	PathDataMove = PathData;
 	ProjectileSetting = InitParam;
-	BulletMesh->SetStaticMesh(InitParam.ProjectileStaticMesh);
-	BulletMesh->SetRelativeTransform(ProjectileSetting.ProjectileStaticMeshOffset);
-	//InitVisualMeshProjectile_Multicast(InitParam.ProjectileStaticMesh, ProjectileSetting.ProjectileStaticMeshOffset);
+	//BulletMesh->SetStaticMesh(InitParam.ProjectileStaticMesh);
+	//BulletMesh->SetRelativeTransform(ProjectileSetting.ProjectileStaticMeshOffset);
+	InitVisualMeshProjectile_Multicast(InitParam.ProjectileStaticMesh, ProjectileSetting.ProjectileStaticMeshOffset);
 	
 	BulletCollisionSphere->OnComponentHit.AddDynamic(this, &AProjectileBase::BulletCollisionSphereHit);
 
@@ -98,8 +98,8 @@ void AProjectileBase::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AAc
 
 		if (myMaterial && OtherComp)
 		{
-			//SpawnHitDecal_Multicast(myMaterial, OtherComp, Hit);
-			UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.0f);
+			SpawnHitDecal_Multicast(myMaterial, OtherComp, Hit);
+			//UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.0f);
 		}
 	}
 	if (ProjectileSetting.HitFX)
@@ -107,14 +107,14 @@ void AProjectileBase::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AAc
 		UParticleSystem* myParticle = ProjectileSetting.HitFX;
 		if (myParticle)
 		{
-			//SpawnHitFx_Multicast(myParticle, Hit);
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), myParticle, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.0f)));
+			SpawnHitFx_Multicast(myParticle, Hit);
+			//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), myParticle, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.0f)));
 		}
 	}
 	if (ProjectileSetting.HitSound)
 	{
-		//SpawnHitSound_Multicast(ProjectileSetting.HitSound, Hit);
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
+		SpawnHitSound_Multicast(ProjectileSetting.HitSound, Hit);
+		//UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ProjectileFlightTimer);
@@ -125,7 +125,7 @@ void AProjectileBase::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AAc
 
 
 
-/*void AProjectileBase::InitVisualMeshProjectile_Multicast_Implementation(UStaticMesh* newMesh, FTransform MeshRelative)
+void AProjectileBase::InitVisualMeshProjectile_Multicast_Implementation(UStaticMesh* newMesh, FTransform MeshRelative)
 {
 	BulletMesh->SetStaticMesh(newMesh);
 	BulletMesh->SetRelativeTransform(MeshRelative);
@@ -143,4 +143,4 @@ void AProjectileBase::SpawnHitFx_Multicast_Implementation(UParticleSystem* FxTem
 void AProjectileBase::SpawnHitSound_Multicast_Implementation(USoundBase* HitSound, FHitResult HitResult)
 {
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
-}*/
+}

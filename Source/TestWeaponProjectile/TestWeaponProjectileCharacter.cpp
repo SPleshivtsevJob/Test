@@ -21,7 +21,7 @@ ATestWeaponProjectileCharacter::ATestWeaponProjectileCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-	
+	this->SetReplicates(true);
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -108,7 +108,7 @@ void ATestWeaponProjectileCharacter::Move(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	//!FreeCamera &&
-	if (!FreeCamera && Controller != nullptr)
+	if (!isFreeCamera && Controller != nullptr)
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -139,8 +139,10 @@ void ATestWeaponProjectileCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+
 void ATestWeaponProjectileCharacter::InitWeapon(FName IdWeaponName)
 {
+
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
@@ -184,9 +186,11 @@ void ATestWeaponProjectileCharacter::InitWeapon(FName IdWeaponName)
 	}
 }
 
+
+
 void ATestWeaponProjectileCharacter::InputAttackPressed(const FInputActionValue& Value)
 {
-	if(!FreeCamera)
+	if(!isFreeCamera)
 		AttackCharEvent(true);
 }
 
@@ -197,20 +201,21 @@ void ATestWeaponProjectileCharacter::InputAttackReleased(const FInputActionValue
 
 void ATestWeaponProjectileCharacter::AimFirstViewPressed(const FInputActionValue& Value)
 {
-	if (!isAimFirstView && !FreeCamera)
+	if (!isAimFirstView && !isFreeCamera)
 	{
 		bUseControllerRotationYaw = true;
 		FollowCamera->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false));
-		FollowCamera->AttachToComponent(CurrentWeapon->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, false), "SocketAim");
+		FollowCamera->AttachToComponent(CurrentWeapon->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, false), "CameraSocket");
 
 		FollowCamera->SetRelativeLocation(FVector(0.0f, -8.0f, 20.0f));
 		FollowCamera->SetRelativeRotation(FRotator((FollowCamera->GetRelativeRotation()).Pitch, 90.0f, (FollowCamera->GetRelativeRotation()).Roll));
 		
 		isAimFirstView = true;
+		SetAimFirstView_OnServer(true);
 	}
 	else
 	{
-		if (!FreeCamera)
+		if (!isFreeCamera)
 		{
 			bUseControllerRotationYaw = false;
 			FollowCamera->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false));
@@ -220,27 +225,76 @@ void ATestWeaponProjectileCharacter::AimFirstViewPressed(const FInputActionValue
 			FollowCamera->SetRelativeRotation(FRotator((FollowCamera->GetRelativeRotation()).Pitch, 0.0f, (FollowCamera->GetRelativeRotation()).Roll));
 			
 			isAimFirstView = false;
+			SetAimFirstView_OnServer(false);
 		}
+	}
+}
+
+void ATestWeaponProjectileCharacter::SetAimFirstView_OnServer_Implementation(bool bIsAimFirst)
+{
+	if (bIsAimFirst)
+	{
+		bUseControllerRotationYaw = true;
+		FollowCamera->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false));
+		FollowCamera->AttachToComponent(CurrentWeapon->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, false), "CameraSocket");
+
+		FollowCamera->SetRelativeLocation(FVector(0.0f, -8.0f, 20.0f));
+		FollowCamera->SetRelativeRotation(FRotator((FollowCamera->GetRelativeRotation()).Pitch, 90.0f, (FollowCamera->GetRelativeRotation()).Roll));
+
+		isAimFirstView = true;
+		//SetAimFirstView_OnServer(true);
+	}
+	else
+	{
+
+			bUseControllerRotationYaw = false;
+			FollowCamera->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false));
+			FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, false));
+
+			FollowCamera->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+			FollowCamera->SetRelativeRotation(FRotator((FollowCamera->GetRelativeRotation()).Pitch, 0.0f, (FollowCamera->GetRelativeRotation()).Roll));
+
+			isAimFirstView = false;
+			//SetAimFirstView_OnServer(false);
+
 	}
 }
 
 void ATestWeaponProjectileCharacter::AimThirdViewPressed(const FInputActionValue& Value)
 {
-	if (!isAimFirstView && !FreeCamera)
+	if (!isAimFirstView && !isFreeCamera)
 	{
 		if (isAimThirdView)
 		{
 			MoveCamera(this, FollowCamera, FVector(0.0f, 0.0f, 0.0f));
 			isAimThirdView = false;
-
+			SetAimThirdView_OnServer(false);
 		}
 		else
 		{
 			MoveCamera(this, FollowCamera, FVector(140.0f, 30.0f, -55.0f));
 			isAimThirdView = true;
+			SetAimThirdView_OnServer(true);
 		}
 	}
 }
+
+void ATestWeaponProjectileCharacter::SetAimThirdView_OnServer_Implementation(bool bIsAimThird)
+{
+	if (!bIsAimThird)
+	{
+		MoveCamera(this, FollowCamera, FVector(0.0f, 0.0f, 0.0f));
+		isAimThirdView = false;
+		//SetAimThirdView_OnServer(false);
+	}
+	else
+	{
+		MoveCamera(this, FollowCamera, FVector(140.0f, 30.0f, -55.0f));
+		isAimThirdView = true;
+		//SetAimThirdView_OnServer(true);
+	}
+}
+
 
 void ATestWeaponProjectileCharacter::MoveCamera(ATestWeaponProjectileCharacter* Char, UCameraComponent* Camera, FVector Location)
 {
@@ -253,7 +307,8 @@ void ATestWeaponProjectileCharacter::GetFreeCameraPressed(const FInputActionValu
 {
 	if (!isAimFirstView)
 	{
-		FreeCamera = true;
+		isFreeCamera = true;
+		SetIsFreeCamera_OnServer(true);
 	}
 }
 
@@ -261,8 +316,14 @@ void ATestWeaponProjectileCharacter::GetFreeCameraReleased(const FInputActionVal
 {
 	if (!isAimFirstView)
 	{
-		FreeCamera = false;
+		isFreeCamera = false;
+		SetIsFreeCamera_OnServer(false);
 	}
+}
+
+void ATestWeaponProjectileCharacter::SetIsFreeCamera_OnServer_Implementation(bool bisFree)
+{
+	isFreeCamera = bisFree;
 }
 
 AWeaponBase* ATestWeaponProjectileCharacter::GetCurrentWeapon()
@@ -270,7 +331,7 @@ AWeaponBase* ATestWeaponProjectileCharacter::GetCurrentWeapon()
 	return CurrentWeapon;
 }
 
-void ATestWeaponProjectileCharacter::AttackCharEvent(bool bIsFiring)
+void ATestWeaponProjectileCharacter::AttackCharEvent_Implementation(bool bIsFiring)
 {
 	CurrentWeapon = GetCurrentWeapon();
 	if (CurrentWeapon)
@@ -292,15 +353,20 @@ void ATestWeaponProjectileCharacter::SetWeaponStateFire(bool bIsFire)
 	}
 }
 
-void ATestWeaponProjectileCharacter::UpdateTraceLocAndRot(FVector Location, FRotator Rotation)
-{
-	TraceLocation = Location;
-	TraceForwardVector = UKismetMathLibrary::GetForwardVector(Rotation);
-}
-
 void ATestWeaponProjectileCharacter::Fire()
 {
-		UArrowComponent* ShootLocation = CurrentWeapon->ShootLocation;
+	CurrentWeapon->Fire(ShootArrow->GetComponentLocation(), (UKismetMathLibrary::GetForwardVector(ShootArrow->GetComponentRotation())), isAimFirstView);
+}
+	
+void ATestWeaponProjectileCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATestWeaponProjectileCharacter, CurrentWeapon);
+	//DOREPLIFETIME(ATestWeaponProjectileCharacter, FollowCamera);
+}
+
+/*		UArrowComponent* ShootLocation = CurrentWeapon->ShootLocation;
 		if (ShootLocation)
 		{
 			FVector SpawnLocation = ShootLocation->GetComponentLocation();
@@ -393,4 +459,4 @@ void ATestWeaponProjectileCharacter::Fire()
 			UGameplayStatics::SpawnSoundAtLocation(GetWorld(), CurrentWeapon->WeaponSetting.SoundFireWeapon, ShootLocation->GetComponentLocation());
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CurrentWeapon->WeaponSetting.EffectFireWeapon, ShootLocation->GetComponentTransform());
 		}
-}
+}*/

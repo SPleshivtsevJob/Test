@@ -54,18 +54,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	FName WeaponName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(BlueprintReadOnly)
 	bool isAimFirstView = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	bool FreeCamera = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	bool isFreeCamera = false;
+	UPROPERTY(BlueprintReadOnly)
 	bool isAimThirdView = false;
 
 	UPROPERTY()
 	FVector TraceLocation;
 	UPROPERTY()
 	FVector TraceForwardVector;
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AWeaponBase* CurrentWeapon = nullptr;
 protected:
 
@@ -102,15 +102,25 @@ public:
 	UFUNCTION()
 	void GetFreeCameraReleased(const FInputActionValue& Value);
 
-	UFUNCTION()
-	void UpdateTraceLocAndRot(FVector Location, FRotator Rotation);
+
+	UFUNCTION(Server, Reliable)
+	void SetAimFirstView_OnServer(bool bIsAimFirst);
+	UFUNCTION(Server, Reliable)
+	void SetAimThirdView_OnServer(bool bIsAimThird);
+	UFUNCTION(Server, Reliable)
+	void SetIsFreeCamera_OnServer(bool bisFree);
+	
 	UFUNCTION()
 	void MoveCamera(ATestWeaponProjectileCharacter* Char, UCameraComponent* Camera, FVector Location);
 
+	
+	UFUNCTION()
 	void InitWeapon(FName IdWeaponName);
+
+	
 	UFUNCTION(BlueprintCallable)
 	AWeaponBase* GetCurrentWeapon();
-	UFUNCTION()
+	UFUNCTION(Server, Reliable)
 	void AttackCharEvent(bool bIsFiring);
 	void SetWeaponStateFire(bool bIsFire);
 	void Fire();

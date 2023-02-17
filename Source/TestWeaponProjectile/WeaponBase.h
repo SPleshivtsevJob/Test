@@ -40,5 +40,5 @@ protected:
 
 public:	
 	void WeaponInit();
-	void Fire(AProjectileBase* myProjectile, TArray <FPredictProjectilePathPointData> PathData, FVector FireVector, bool CloseHit);
+	void Fire(FVector LocationTrace, FVector ForwardVectorTrace, bool isAimFirstView);
 };
