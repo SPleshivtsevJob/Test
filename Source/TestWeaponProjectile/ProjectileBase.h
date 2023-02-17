@@ -52,12 +52,12 @@ public:
 	void ProjectileFlight();
 	void ProjectileMove();
 
-	UFUNCTION(NetMulticast, Reliable)
+	/*UFUNCTION(NetMulticast, Reliable)
 		void InitVisualMeshProjectile_Multicast(UStaticMesh* newMesh, FTransform MeshRelative);
 	UFUNCTION(NetMulticast, Reliable)
 		void SpawnHitDecal_Multicast(UMaterialInterface* DecalMaterial, UPrimitiveComponent* OtherComp, FHitResult HitResult);
 	UFUNCTION(NetMulticast, Reliable)
 		void SpawnHitFx_Multicast(UParticleSystem* FxTemplate, FHitResult HitResult);
 	UFUNCTION(NetMulticast, Reliable)
-		void SpawnHitSound_Multicast(USoundBase* HitSound, FHitResult HitResult);
+		void SpawnHitSound_Multicast(USoundBase* HitSound, FHitResult HitResult);*/
 };
